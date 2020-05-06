@@ -15,18 +15,20 @@ xy_1 = (308103., -2577200.) #polar stereo coordinates of a point near Helheim 20
 xy_2 = (302026., -2566770.) # point up on North branch
 xy_3 = (297341., -2571490.) # point upstream on main branch
 xy_4 = (294809., -2577580.) # point on southern tributary
+xys = (xy_1, xy_2, xy_3, xy_4)
+labels = ('Near terminus', 'North branch', 'Main branch', 'South branch')
 
-d = hel_stack.timeseries(xy=xy_1, key=data_key)
-print(type(d))
+series = [hel_stack.timeseries(xy=xyi, key=data_key) for xyi in xys]
 
 s = hel_stack.slice(index=10, key=data_key)
 
-# fig1, ax1 = plt.subplots()
-# ax1.plot(hel_stack.tdec, d, marker='o', lw=0.5)
-# ax1.set_xlabel('Year')
-# ax1.set_ylabel('Speed [m/a]')
-# ax1.set_title('Helheim Glacier speed at {}'.format(0.001*np.array(xy_1)))
-# plt.show()
+fig1, ax1 = plt.subplots()
+for i, ser in enumerate(series):
+	ax1.plot(hel_stack.tdec, ser, marker='o', lw=0.5, label=labels[i])
+ax1.set_ylabel('Speed [km/a]')
+ax1.legend(loc='best')
+plt.show()
+
 
 fig2, ax2 = plt.subplots()
 ax2.contourf(hel_stack.stacks[0]._datasets['x'], hel_stack.stacks[0]._datasets['y'], s)
