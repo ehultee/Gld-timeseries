@@ -19,6 +19,9 @@ xys = (xy_1, xy_2, xy_3, xy_4)
 labels = ('Near terminus', 'North branch', 'Main branch', 'South branch')
 
 series = [hel_stack.timeseries(xy=xyi, key=data_key) for xyi in xys]
+series_m = [np.ma.masked_invalid(ser) for ser in series]
+masks = [np.ma.getmask(ser) for ser in series_m]
+
 
 ## Set up design matrix and perform lasso regression, according to Bryan's documentation
 def build_collection(dates):
@@ -71,13 +74,17 @@ G = model.G
 # plt.show()
 
 # Create a ridge regression solver that damps out the transient spline coefficients
-ridge = ice.tseries.select_solver('ridge', reg_indices=model.itransient, penalty=2)
+ridge = ice.tseries.select_solver('ridge', reg_indices=model.itransient, penalty=20)
+# Create lasso regression object
+lasso = ice.tseries.select_solver('lasso', reg_indices=model.itransient, penalty=2)
 
-# Perform inversion to get coefficient vector and coefficient covariance matrix
-m, Cm = ridge.invert(model.G, series[0]) # fit near-terminus (series[0]) first
+## Perform inversion to get coefficient vector and coefficient covariance matrix
+# SUCCESS, m, Cm = ridge.invert(model.G, series[0]) # fit near-terminus (series[0]) first
+SUCCESS, m_lasso, Cm = lasso.invert(model.G, series[0])
+print(SUCCESS)
 
-# Model will perform predictions
-pred = model.predict(m)
+## Model will perform predictions
+pred = model.predict(m_lasso)
 
 print(len(pred['full']), len(series[0]))
 print(sum(np.isnan(pred['full'])), sum(np.isnan(series[0])))
