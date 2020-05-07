@@ -74,9 +74,9 @@ G = model.G
 # plt.show()
 
 # Create a ridge regression solver that damps out the transient spline coefficients
-ridge = ice.tseries.select_solver('ridge', reg_indices=model.itransient, penalty=20)
+ridge = ice.tseries.select_solver('ridge', reg_indices=model.itransient, penalty=2)
 # Create lasso regression object
-lasso = ice.tseries.select_solver('lasso', reg_indices=model.itransient, penalty=2)
+lasso = ice.tseries.select_solver('lasso', reg_indices=model.itransient, penalty=0.2)
 
 ## Perform inversion to get coefficient vector and coefficient covariance matrix
 # SUCCESS, m, Cm = ridge.invert(model.G, series[0]) # fit near-terminus (series[0]) first
@@ -90,10 +90,21 @@ print(len(pred['full']), len(series[0]))
 print(sum(np.isnan(pred['full'])), sum(np.isnan(series[0])))
 print(np.nanmean(pred['full']), np.nanmean(series[0]))
 
-## Plotting
-# fig, ax = plt.subplots(figsize=(12,6))
-# ax.plot(hel_stack.tdec, series[0], '.')
-# ax.plot(hel_stack.tdec, pred['full'])
-# ax.set_xlabel('Year')
-# ax.set_ylabel('Velocity')
-# plt.show()
+## Plot continuous series
+fig, ax = plt.subplots(figsize=(12,6))
+ax.plot(hel_stack.tdec, series[0], '.')
+ax.plot(hel_stack.tdec, pred['full'])
+ax.set_xlabel('Year')
+ax.set_ylabel('Velocity')
+plt.show()
+
+## Plot secular and transient signals
+fig1, (ax1, ax2) = plt.subplots(nrows=2, figsize=(12,6))
+
+ax1.plot(hel_stack.tdec, pred['secular'], label='Modeled')
+ax1.set_title('Secular')
+
+ax2.plot(hel_stack.tdec, pred['transient'], label='Modeled')
+ax2.set_title('Transient')
+
+plt.show()
