@@ -16,8 +16,8 @@ xy_1 = (308103., -2577200.) #polar stereo coordinates of a point near Helheim 20
 xy_2 = (302026., -2566770.) # point up on North branch
 xy_3 = (297341., -2571490.) # point upstream on main branch
 xy_4 = (294809., -2577580.) # point on southern tributary
-xys = (xy_1, xy_2, xy_3, xy_4)
-labels = ('Near terminus', 'North branch', 'Main branch', 'South branch')
+xys = (xy_1, xy_3, xy_4, xy_2)
+labels = ('Near terminus', 'Main branch', 'South branch', 'North branch')
 
 series = [hel_stack.timeseries(xy=xyi, key=data_key) for xyi in xys]
 
