@@ -2,8 +2,9 @@
 ## 6 May 2020  EHU
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import iceutils as ice
-import sys
+
 
 ## Set up combined hdf5 stack
 fpath='/Users/lizz/Documents/Research/Gld-timeseries/Stack/'
@@ -11,7 +12,7 @@ hel_stack = ice.MagStack(files=[fpath+'vx.h5', fpath+'vy.h5'])
 data_key = 'igram' # B. Riel convention for access to datasets in hdf5 stack
 
 ## Extract time series at selected points
-xy_1 = (308103., -2577200.) #polar stereo coordinates of a point near Helheim 2009 terminus, in m
+xy_1 = (308103., -2577200.) # polar stereo coordinates of a point near Helheim 2009 terminus, in m
 xy_2 = (302026., -2566770.) # point up on North branch
 xy_3 = (297341., -2571490.) # point upstream on main branch
 xy_4 = (294809., -2577580.) # point on southern tributary
@@ -64,12 +65,10 @@ collection = build_collection(dates)
 # Instantiate a model
 model = ice.tseries.Model(dates, collection=collection)
 
-# Create regression solvers
-# ridge = ice.tseries.select_solver('ridge', reg_indices=model.itransient, penalty=2)
+# Create lasso regression solvers (see time_series_inversion.ipynb for ridge vs lasso performance)
 lasso = ice.tseries.select_solver('lasso', reg_indices=model.itransient, penalty=0.2)
 
 ## Perform inversion to get coefficient vector and coefficient covariance matrix
-# SUCCESS, m, Cm = ridge.invert(model.G, series[0]) # fit near-terminus (series[0]) first
 SUCCESS, m_lasso, Cm = lasso.invert(model.G, series[0])
 print(SUCCESS) # Boolean success flag
 
@@ -80,24 +79,27 @@ pred = model.predict(m_lasso)
 print(np.nanmean(pred['full']), np.nanmean(series[0]))
 
 
-## Plot continuous series
+## Plot output in nice figures
+colors = cm.get_cmap('Dark2')(np.linspace(0, 1, num=len(labels)))
+
+## Plot single continuous series
 fig, ax = plt.subplots(figsize=(12,6))
-ax.plot(hel_stack.tdec, series[0], '.')
-ax.plot(hel_stack.tdec, pred['full'])
+ax.plot(hel_stack.tdec, series[0], '.', color=colors[0], markersize=10, alpha=0.5)
+ax.plot(hel_stack.tdec, pred['full'], color=colors[0])
 ax.set_xlabel('Year')
 ax.set_ylabel('Velocity')
 plt.show()
 
 ## Plot secular, transient, and seasonal signals
-fig1, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(12,6))
+fig1, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(12,6), sharex=True)
 
-ax1.plot(hel_stack.tdec, pred['secular'])
+ax1.plot(hel_stack.tdec, pred['secular'], color=colors[0])
 ax1.set_title('Secular')
 
-ax2.plot(hel_stack.tdec, pred['seasonal'])
+ax2.plot(hel_stack.tdec, pred['seasonal'], color=colors[0])
 ax2.set_title('Seasonal')
 
-ax3.plot(hel_stack.tdec, pred['transient'])
+ax3.plot(hel_stack.tdec, pred['transient'], color=colors[0])
 ax3.set_title('Transient')
 
 plt.show()
