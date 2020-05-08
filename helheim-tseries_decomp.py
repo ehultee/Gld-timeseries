@@ -16,11 +16,9 @@ xy_1 = (308103., -2577200.) # polar stereo coordinates of a point near Helheim 2
 xy_2 = (302026., -2566770.) # point up on North branch
 xy_3 = (297341., -2571490.) # point upstream on main branch
 xy_4 = (294809., -2577580.) # point on southern tributary
-xys = (xy_1, xy_2, xy_3, xy_4)
-labels = ('Near terminus', 'North branch', 'Main branch', 'South branch')
-
+xys = (xy_1, xy_3, xy_4, xy_2) #order by mean velocity magnitude (for nice stacked plotting)
+labels = ('Near terminus', 'Main branch', 'South branch', 'North branch')
 series = [hel_stack.timeseries(xy=xyi, key=data_key) for xyi in xys]
-series_m = [np.ma.masked_invalid(ser) for ser in series]
 
 ## Set up design matrix and perform lasso regression, according to Bryan's documentation
 def build_collection(dates):
@@ -68,38 +66,74 @@ model = ice.tseries.Model(dates, collection=collection)
 # Create lasso regression solvers (see time_series_inversion.ipynb for ridge vs lasso performance)
 lasso = ice.tseries.select_solver('lasso', reg_indices=model.itransient, penalty=0.2)
 
-## Perform inversion to get coefficient vector and coefficient covariance matrix
-SUCCESS, m_lasso, Cm = lasso.invert(model.G, series[0])
-print(SUCCESS) # Boolean success flag
-
-pred = model.predict(m_lasso)
-
-# print(len(pred['full']), len(series[0]))
-# print(sum(np.isnan(pred['full'])), sum(np.isnan(series[0])))
-print(np.nanmean(pred['full']), np.nanmean(series[0]))
+## Perform inversion for each time series extracted
+decomps = []
+for ser in series:    
+    SUCCESS, m_lasso, Cm = lasso.invert(model.G, ser)
+    pred = model.predict(m_lasso)
+    decomps.append(pred)
 
 
 ## Plot output in nice figures
 colors = cm.get_cmap('Dark2')(np.linspace(0, 1, num=len(labels)))
 
-## Plot single continuous series
-fig, ax = plt.subplots(figsize=(12,6))
-ax.plot(hel_stack.tdec, series[0], '.', color=colors[0], markersize=10, alpha=0.5)
-ax.plot(hel_stack.tdec, pred['full'], color=colors[0])
-ax.set_xlabel('Year')
-ax.set_ylabel('Velocity')
+# ## Plot single continuous series
+# fig, ax = plt.subplots(figsize=(12,6))
+# ax.plot(hel_stack.tdec, series[0], '.', color=colors[0], markersize=10, alpha=0.5)
+# ax.plot(hel_stack.tdec, pred['full'], color=colors[0])
+# ax.set_xlabel('Year')
+# ax.set_ylabel('Velocity')
+# plt.show()
+
+# ## Plot secular, transient, and seasonal signals
+# fig1, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(12,6), sharex=True)
+# ax1.plot(hel_stack.tdec, pred['secular'], color=colors[0])
+# ax1.set_title('Secular')
+# ax2.plot(hel_stack.tdec, pred['seasonal'], color=colors[0])
+# ax2.set_title('Seasonal')
+# ax3.plot(hel_stack.tdec, pred['transient'], color=colors[0])
+# ax3.set_title('Transient')
+# plt.show()
+
+## Plot fits of all extracted series
+fig2, ax4 = plt.subplots(figsize=(12,6))
+for i in range(len(series)):
+    ax4.plot(hel_stack.tdec, series[i], '.', color=colors[i], markersize=10, alpha=0.5, label=labels[i])
+    ax4.plot(hel_stack.tdec, decomps[i]['full'], color=colors[i])
+ax4.legend(loc='center right')
+ax4.set(xlabel='Year', ylim=(0, 11), yticks=[0, 2, 4, 6, 8, 10], ylabel='Velocity [km/a]')
 plt.show()
 
-## Plot secular, transient, and seasonal signals
-fig1, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(12,6), sharex=True)
+## Plot stacked secular signals
+fig3, ax5 = plt.subplots(figsize=(12,6))
+for i in range(len(series)):
+    ax5.plot(hel_stack.tdec, decomps[i]['secular'], color=colors[i], label='{} secular'.format(labels[i]))
+ax5.legend(loc='best')
+ax5.set(xlabel='Year', ylim=(0, 11), yticks=[0, 2, 4, 6, 8, 10], ylabel='Velocity [km/a]')
+plt.show()
 
-ax1.plot(hel_stack.tdec, pred['secular'], color=colors[0])
-ax1.set_title('Secular')
+## Stacked seasonal signals (check they correspond)
+# fig4, ax6 = plt.subplots(figsize=(12,6))
+# for i in range(len(series)):
+#     ax6.plot(hel_stack.tdec, decomps[i]['seasonal'], color=colors[i], label='{} seasonal'.format(labels[i]))
+# ax6.legend(loc='best')
+# # ax6.set(xlabel='Year', ylim=(0, 11), yticks=[0, 2, 4, 6, 8, 10], ylabel='Velocity [km/a]')
+# plt.show()
 
-ax2.plot(hel_stack.tdec, pred['seasonal'], color=colors[0])
-ax2.set_title('Seasonal')
+## Plot stacked transient signals
+fig5, ax7 = plt.subplots(figsize=(12,6))
+for i in range(len(series)):
+    ax7.plot(hel_stack.tdec, decomps[i]['transient'], color=colors[i], label='{} transient'.format(labels[i]))
+ax7.legend(loc='best')
+ax7.set(xlabel='Year', ylim=(-2.25, 1.25), yticks=[-2, -1, 0, 1], ylabel='Speed [km/a]')
+plt.show()
 
-ax3.plot(hel_stack.tdec, pred['transient'], color=colors[0])
-ax3.set_title('Transient')
-
+## Plot secular and transient for EGU
+fig6, (ax8, ax9) = plt.subplots(nrows=2, figsize=(12,6), sharex=True)
+for i in range(len(series)):
+    ax8.plot(hel_stack.tdec, decomps[i]['secular'], color=colors[i], label=labels[i])
+    ax9.plot(hel_stack.tdec, decomps[i]['transient'], color=colors[i])
+ax9.legend(loc='best')
+ax8.set(ylim=(0, 11), yticks=[0, 2, 4, 6, 8, 10], ylabel='Speed [km/a]', title='Secular signal')
+ax9.set(xlabel='Year', ylim=(-2.25, 1.25), yticks=[-2, -1, 0, 1], ylabel='Speed [km/a]', title='Transient signal')
 plt.show()
