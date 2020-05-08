@@ -131,8 +131,8 @@ plt.show()
 ## Plot secular and transient for EGU
 fig6, (ax8, ax9) = plt.subplots(nrows=2, figsize=(12,6), sharex=True)
 for i in range(len(series)):
-    ax8.plot(hel_stack.tdec, decomps[i]['secular'], color=colors[i], label=labels[i])
-    ax9.plot(hel_stack.tdec, decomps[i]['transient'], color=colors[i])
+    ax8.plot(hel_stack.tdec, decomps[i]['secular'], color=colors[i])
+    ax9.plot(hel_stack.tdec, decomps[i]['transient'], color=colors[i], label=labels[i])
 ax9.legend(loc='best')
 ax8.set(ylim=(0, 11), yticks=[0, 2, 4, 6, 8, 10], ylabel='Speed [km/a]', title='Secular signal')
 ax9.set(xlabel='Year', ylim=(-2.25, 1.25), yticks=[-2, -1, 0, 1], ylabel='Speed [km/a]', title='Transient signal')
