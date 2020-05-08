@@ -20,8 +20,6 @@ labels = ('Near terminus', 'North branch', 'Main branch', 'South branch')
 
 series = [hel_stack.timeseries(xy=xyi, key=data_key) for xyi in xys]
 series_m = [np.ma.masked_invalid(ser) for ser in series]
-masks = [np.ma.getmask(ser) for ser in series_m]
-
 
 ## Set up design matrix and perform lasso regression, according to Bryan's documentation
 def build_collection(dates):
@@ -66,29 +64,21 @@ collection = build_collection(dates)
 # Instantiate a model
 model = ice.tseries.Model(dates, collection=collection)
 
-## Access the design matrix for plotting
-G = model.G
-# plt.plot(hel_stack.tdec, G)
-# plt.xlabel('Year')
-# plt.ylabel('Amplitude')
-# plt.show()
-
-# Create a ridge regression solver that damps out the transient spline coefficients
-ridge = ice.tseries.select_solver('ridge', reg_indices=model.itransient, penalty=2)
-# Create lasso regression object
+# Create regression solvers
+# ridge = ice.tseries.select_solver('ridge', reg_indices=model.itransient, penalty=2)
 lasso = ice.tseries.select_solver('lasso', reg_indices=model.itransient, penalty=0.2)
 
 ## Perform inversion to get coefficient vector and coefficient covariance matrix
 # SUCCESS, m, Cm = ridge.invert(model.G, series[0]) # fit near-terminus (series[0]) first
 SUCCESS, m_lasso, Cm = lasso.invert(model.G, series[0])
-print(SUCCESS)
+print(SUCCESS) # Boolean success flag
 
-## Model will perform predictions
 pred = model.predict(m_lasso)
 
-print(len(pred['full']), len(series[0]))
-print(sum(np.isnan(pred['full'])), sum(np.isnan(series[0])))
+# print(len(pred['full']), len(series[0]))
+# print(sum(np.isnan(pred['full'])), sum(np.isnan(series[0])))
 print(np.nanmean(pred['full']), np.nanmean(series[0]))
+
 
 ## Plot continuous series
 fig, ax = plt.subplots(figsize=(12,6))
@@ -98,13 +88,16 @@ ax.set_xlabel('Year')
 ax.set_ylabel('Velocity')
 plt.show()
 
-## Plot secular and transient signals
-fig1, (ax1, ax2) = plt.subplots(nrows=2, figsize=(12,6))
+## Plot secular, transient, and seasonal signals
+fig1, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(12,6))
 
-ax1.plot(hel_stack.tdec, pred['secular'], label='Modeled')
+ax1.plot(hel_stack.tdec, pred['secular'])
 ax1.set_title('Secular')
 
-ax2.plot(hel_stack.tdec, pred['transient'], label='Modeled')
-ax2.set_title('Transient')
+ax2.plot(hel_stack.tdec, pred['seasonal'])
+ax2.set_title('Seasonal')
+
+ax3.plot(hel_stack.tdec, pred['transient'])
+ax3.set_title('Transient')
 
 plt.show()
