@@ -7,7 +7,7 @@ import iceutils as ice
 
 
 ## Set up combined hdf5 stack
-fpath='/Users/lizz/Documents/Research/Gld-timeseries/Stack/'
+fpath='/Users/lizz/Documents/GitHub/Data_unsynced/Gld-Stack/'
 hel_stack = ice.MagStack(files=[fpath+'vx.h5', fpath+'vy.h5'])
 data_key = 'igram' # B. Riel convention for access to datasets in hdf5 stack
 
