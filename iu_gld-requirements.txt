@@ -1,5 +1,5 @@
 certifi==2019.11.28
-cvxopt==1.2.0
+cvxopt==1.2.7
 cycler==0.10.0
 GDAL==2.3.3
 h5py==2.10.0
