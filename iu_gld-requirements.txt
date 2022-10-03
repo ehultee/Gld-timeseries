@@ -4,7 +4,7 @@ cycler==0.10.0
 GDAL==2.3.3
 h5py==2.10.0
 iceutils==0.0.0
-joblib==0.14.1
+joblib==1.2.0
 kiwisolver==1.0.1
 lxml==4.6.5
 matplotlib==3.1.3
