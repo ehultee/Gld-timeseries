@@ -6,7 +6,7 @@ h5py==2.10.0
 iceutils==0.0.0
 joblib==1.2.0
 kiwisolver==1.0.1
-lxml==4.6.5
+lxml==4.9.1
 matplotlib==3.1.3
 mkl-fft==1.0.15
 mkl-service==2.3.0
